@@ -1,54 +1,74 @@
 import { MD3LightTheme } from 'react-native-paper';
 import * as constant from '../constants/Constants';
 
+/**
+ * Tema de la app con la paleta de la plataforma web
+ */
 export const theme = {
   ...MD3LightTheme,
-  roundness: 8, 
+  roundness: 4,                       // 0.25rem, como los botones e inputs de la web
+
   colors: {
     ...MD3LightTheme.colors,
-    
-    "primary": "#2862e8",                
-    "onPrimary": "#ffffff",
-    "primaryContainer": constant.primaryContainer,        
-    "onPrimaryContainer": "#001a4d",
 
-    "secondary": "#748892",            
+    // Botones principales en el azul oscuro de la web ($brand-background / menú)
+    "primary": "#3f4d67",
+    "onPrimary": "#ffffff",
+    "primaryContainer": "#e4e8ef",
+    "onPrimaryContainer": "#2b3547",
+
+    // Azul de la web, disponible como colors.accent para detalles
+    "accent": "#04a9f5",              // $primary-color
+
+    "secondary": "#748892",           // $secondary-color
     "onSecondary": "#ffffff",
     "secondaryContainer": constant.secondaryContainer,
     "onSecondaryContainer": "#1d262b",
 
-    "error": "#f44236",            
+    "error": "#f44236",               // $danger-color
     "onError": "#ffffff",
     "errorContainer": constant.errorContainer,
     "onErrorContainer": "#600e0a",
 
-    "background": "#efeff1",           
+    "background": "#f4f7fa",          // $theme-background
     "surface": "#ffffff",
-    "onSurface": "#37474f",           
-    "onSurfaceVariant": "#748892",       
-    "outline": "#d6d6d6",                 
+    "onSurface": "#37474f",           // $dark-color
+    "onSurfaceVariant": "#748892",
+    "outline": "#d6d6d6",             // $default-color
 
-    "success": "#4caf50",                 
+    "outlineVariant": "#eaeaea",      // $theme-border
+    "surfaceVariant": "#f2f2f2",      // $light-color
+    "tertiaryContainer": "#ede7f6",
+    "onTertiaryContainer": "#5e35b1",
+
+    "success": "#1de9b6",             // $success-color
     "onSuccess": "#ffffff",
     "successContainer": constant.successContainer,
-    "onSuccessContainer": "#1b5e20",
+    "onSuccessContainer": "#0b6b53",
 
-    "warning": "#f1c40f",          
-    "onWarning": "#000000",
+    "warning": "#f4c22b",             // $warning-color
+    "onWarning": "#ffffff",
     "warningContainer": constant.warningContainer,
     "onWarningContainer": "#7d6608",
 
-    "info": "#03a9f4",                
+    "info": "#3ebfea",                // $info-color
     "onInfo": "#ffffff",
     "infoContainer": "#e1f5fe",
     "onInfoContainer": "#01579b",
 
-    "purple": "#895dc1",       
+    "purple": "#a389d4",              // $purple-color
     "onPurple": "#ffffff",
 
-    "dark": "#37474f",        
-    "default": "#d6d6d6",             
-    "light": "#efeff1",                   
+    "dark": "#37474f",                // $dark-color
+    "default": "#d6d6d6",             // $default-color
+    "light": "#f2f2f2",               // $light-color
+
+    // Textos y bordes de la web
+    "heading": "#111111",             // $theme-heading-color
+    "text": "#888888",                // $theme-font-color
+    "border": "#eaeaea",              // $theme-border
+    "formBg": "#f0f3f6",              // $form-bg
+    "brand": "#3f4d67",               // $brand-background (header / menú)
 
     "cian": "#006874",
     "cianContainer": "#dbe4e6",

@@ -1,8 +1,8 @@
 import CryptoJS from 'crypto-js';
 
 export const DecryptObject = (base64Data, secretKey) => {
-    console.log('base64Data recibido:', base64Data);
-    console.log('secretKey recibida:', secretKey);
+    //console.log('base64Data recibido:', base64Data);
+    //console.log('secretKey recibida:', secretKey);
     
     try {
         if (!base64Data) return null;

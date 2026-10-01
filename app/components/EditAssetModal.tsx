@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Modal, Portal, Text, useTheme } from 'react-native-paper';
 import LocationSelect from './LocationSelect';
-import { Catalogs, Changes, ReviewRow, needsLocation } from './types';
+import { Catalogs, Changes, ReviewRow, needsLocation, NO_CHANGE } from './types';
 import PaperSelect from './PaperSelect';
 
 type Props = {
@@ -13,9 +13,6 @@ type Props = {
   onSave: (assetNumber: string, changes: Changes) => void;
   onReset: (assetNumber: string) => void;
 };
-
-const KEEP = { value: 0, label: 'Keep current' };
-const asKeep = (o: any) => (o.value === 0 ? KEEP : o);
 
 // Ajuste individual: sobrescribe los valores del lote solo para este activo.
 export default function EditAssetModal({ row, initial, catalogs, onDismiss, onSave, onReset }: Props) {
@@ -36,27 +33,27 @@ export default function EditAssetModal({ row, initial, catalogs, onDismiss, onSa
           <View style={styles.fields}>
             <PaperSelect
               label="Organization"
-              options={[KEEP, ...catalogs.organizations]}
-              selectedValue={asKeep(values.organization)}
+              options={[NO_CHANGE, ...catalogs.organizations]}
+              selectedValue={values.organization}
               onSelect={(o: any) => setValues({ ...values, organization: o })}
             />
             <PaperSelect
               label="Center"
-              options={[KEEP, ...catalogs.centers]}
-              selectedValue={asKeep(values.center)}
-              onSelect={(o: any) => setValues({ ...values, center: o, location: KEEP })}
+              options={[NO_CHANGE, ...catalogs.centers]}
+              selectedValue={values.center}
+              onSelect={(o: any) => setValues({ ...values, center: o, location: NO_CHANGE })}
             />
             <LocationSelect
               idCenter={values.center.value}
-              selectedValue={asKeep(values.location)}
+              selectedValue={values.location}
               onSelect={(o) => setValues({ ...values, location: o })}
-              firstOption={KEEP}
+              firstOption={NO_CHANGE}
               required={values.center.value !== 0}
             />
             <PaperSelect
               label="Status"
-              options={[KEEP, ...catalogs.statuses]}
-              selectedValue={asKeep(values.status)}
+              options={[NO_CHANGE, ...catalogs.statuses]}
+              selectedValue={values.status}
               onSelect={(o: any) => setValues({ ...values, status: o })}
             />
           </View>

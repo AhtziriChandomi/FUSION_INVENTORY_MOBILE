@@ -20,7 +20,7 @@ type Props = {
  * Aquí solo se guarda el asset number; no se consulta nada.
  */
 export default function ScanStep({ items, feedback, onScan, onRemove, onClear, onNext }: Props) {
-  const { colors } = useTheme();
+  const { colors } = useTheme() as any;
   const inputRef = useRef<any>(null);
   const [code, setCode] = useState('');
   const [manual, setManual] = useState(__DEV__); // en desarrollo arranca con teclado
@@ -42,8 +42,16 @@ export default function ScanStep({ items, feedback, onScan, onRemove, onClear, o
     setTimeout(() => inputRef.current?.focus(), 150);
   };
 
+  // Colores del mensaje según lo que pasó al escanear
   const feedbackColor =
-    feedback?.type === 'ok' ? colors.primary : feedback?.type === 'warn' ? '#B45309' : colors.error;
+    feedback?.type === 'ok'
+      ? colors.accent ?? colors.info            // agregado: azul
+      : feedback?.type === 'warn'
+        ? colors.onWarningContainer ?? colors.warning  // repetido: amarillo oscuro (legible)
+        : colors.error;                         // error: rojo
+
+  const feedbackIcon =
+    feedback?.type === 'ok' ? 'check-circle' : feedback?.type === 'warn' ? 'alert' : 'close-circle';
 
   return (
     <View style={styles.flex}>
@@ -61,16 +69,20 @@ export default function ScanStep({ items, feedback, onScan, onRemove, onClear, o
           autoCapitalize="characters"
           autoCorrect={false}
           placeholder={manual ? 'Type asset number' : 'Scan asset number'}
+          activeOutlineColor={colors.accent ?? colors.primary}
           left={<TextInput.Icon icon="barcode-scan" />}
           right={<TextInput.Icon icon={manual ? 'keyboard-off-outline' : 'keyboard-outline'} onPress={toggleManual} />}
         />
-        <Text style={[styles.feedback, { color: feedback ? feedbackColor : colors.onSurfaceVariant }]} numberOfLines={1}>
-          {feedback?.text ?? 'Ready to scan'}
-        </Text>
+        <View style={styles.feedbackRow}>
+          {feedback && <Icon source={feedbackIcon} size={14} color={feedbackColor} />}
+          <Text style={[styles.feedback, { color: feedback ? feedbackColor : colors.onSurfaceVariant }]} numberOfLines={1}>
+            {feedback?.text ?? 'Ready to scan'}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.listHeader}>
-        <Text style={[styles.count, { color: colors.onSurfaceVariant }]}>
+        <Text style={[styles.count, { color: items.length ? colors.primary : colors.onSurfaceVariant }]}>
           {items.length} asset{items.length !== 1 ? 's' : ''}
         </Text>
         {items.length > 0 && (
@@ -122,7 +134,8 @@ export default function ScanStep({ items, feedback, onScan, onRemove, onClear, o
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scanBox: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
-  feedback: { fontSize: 12, marginTop: 4, marginLeft: 4, fontWeight: '600' },
+  feedbackRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, marginLeft: 4 },
+  feedback: { flex: 1, fontSize: 12, fontWeight: '600' },
   listHeader: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 12, minHeight: 36,

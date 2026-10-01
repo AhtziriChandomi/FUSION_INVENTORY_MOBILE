@@ -54,13 +54,10 @@ export async function Select_CatInv_Items(params, ptoken) {
   let axiosResult = [];
 
   let token = ptoken ? ptoken : await constant.getDataToken();
-  
-  console.log('---------params', params);
+
   
   await constant.authAxios(token).post(url, jsVar, { headers: { 'Content-Type': 'application/json' } }).then(response => {
-    console.log(response)
     if (response.data && response.data.payload) {
-      console.log('----- response data', response.data)
       axiosResult = DecryptObject(response.data.payload, constant.ENCRYPT_KEY_FUSION);
       console.log(axiosResult)
     } else {

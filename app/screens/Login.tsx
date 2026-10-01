@@ -1,8 +1,9 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, HelperText, Icon, Switch, Text, TextInput, useTheme } from 'react-native-paper';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, HelperText, Icon, Text, TextInput, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import Loginapi from '../../api/Login/Loginapi';
 import { Select_PermissionsByIdPersonnal, Select_RolesByIdPersonnal } from '../../api/PersonnalAPI/Personnalapi';
@@ -11,7 +12,6 @@ import * as constant from '../../constants/Constants';
 import { withOfflineFallback } from '../../services/offilineSwitch';
 import * as SQLiteToken from '../../services/Token';
 import * as SQLiteUser from '../../services/User';
-import { setForceOffline } from '../../store/slices/appSlice';
 import { setUserInfo } from '../../store/slices/userSlice';
 
 export default function Login() {
@@ -104,7 +104,7 @@ export default function Login() {
     if (roles.length === 0) {
       const jsVar = {
         option: 0,
-        idpersonnal: parseInt(user.idPersonnal), // antes: userInfo[0].idPersonnal (userInfo ya es un objeto)
+        idpersonnal: parseInt(user.idPersonnal),
         idrole: 0,
         email: '',
         sipExtension: '',
@@ -121,8 +121,6 @@ export default function Login() {
     dispatch(setUserInfo(user));
   }
 
-  const statusColor = isOfflineMode ? colors.error : '#16A34A';
-
   return (
     <KeyboardAvoidingView
       style={[styles.flex, { backgroundColor: colors.background }]}
@@ -130,13 +128,23 @@ export default function Login() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>
-          {/* Marca */}
+          {/* Marca: expo-image sí renderiza SVG (el Image de react-native no) */}
           <View style={styles.hero}>
-            <Image source={require('../../assets/images/logo.png')} style={styles.logo} resizeMode="contain" />
+            <Image
+              source={require('../../assets/images/ERP_Logo.svg')}
+              style={styles.logo}
+              contentFit="contain"
+            />
           </View>
 
           {/* Formulario */}
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+
+            {/* Estado de conexión */}
+            <View style={[styles.statusRow, { backgroundColor: colors.surfaceVariant }]}>
+              <View style={[styles.statusDot, { backgroundColor: isOfflineMode ? colors.error : '#16A34A' }]} />
+              <Text style={styles.statusText}>{isOfflineMode ? 'Offline' : 'Online'}</Text>
+            </View>
 
             <View>
               <TextInput
@@ -215,19 +223,15 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   inner: { width: '100%', maxWidth: 420, alignSelf: 'center' },
   hero: { alignItems: 'center', marginBottom: 20 },
-  logo: { width: 180, height: 64, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800' },
-  subtitle: { fontSize: 13, marginTop: 2 },
+  // Proporción del SVG (1081.9 x 312.7 ≈ 3.5 : 1)
+  logo: { width: 210, height: 60 },
   card: { borderRadius: 20, borderWidth: 1, padding: 16, gap: 4 },
   statusRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderRadius: 12, paddingVertical: 6, paddingHorizontal: 10, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
+    borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 10,
   },
-  statusLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusRight: { alignItems: 'flex-end' },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  statusTitle: { fontSize: 13, fontWeight: '700' },
-  statusSub: { fontSize: 11 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { fontSize: 12, fontWeight: '700' },
   outline: { borderRadius: 12 },
   helper: { paddingHorizontal: 4, minHeight: 18 },
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, padding: 10, marginBottom: 4 },

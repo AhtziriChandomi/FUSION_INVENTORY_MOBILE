@@ -27,3 +27,14 @@ export const hasAnyChange = (c: Changes) =>
 
 // Si cambias el centro, la location nueva es obligatoria (la anterior era del otro centro)
 export const needsLocation = (c: Changes) => c.center.value !== 0 && c.location.value === 0;
+
+// Texto legible de los cambios: "Center → Tijuana · Status → Active"
+export function describe(c: Changes, separator = '\n') {
+  const parts = [
+    c.organization.value && `Org → ${c.organization.label}`,
+    c.center.value && `Center → ${c.center.label}`,
+    c.location.value && `Loc → ${c.location.label}`,
+    c.status.value && `Status → ${c.status.label}`,
+  ].filter(Boolean);
+  return parts.length ? parts.join(separator) : 'No changes';
+}
