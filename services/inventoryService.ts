@@ -12,13 +12,13 @@ import { CATALOG_TYPE, sqlite_SaveCatalog, sqlite_SelectCatalog } from './catalo
 import { withOfflineFallback } from './offilineSwitch';
 import {
   PendingRow,
+  sqlite_CountPendingByBatch,
   sqlite_CountPendingUpdates,
   sqlite_DeleteErrorUpdates,
   sqlite_DeletePendingUpdates,
   sqlite_InsertPendingUpdates,
   sqlite_MarkPendingError,
   sqlite_SelectPendingUpdates,
-  sqlite_CountPendingByBatch,
 } from './pendingUpdateService';
 
 // Respuesta de app_Sync_Asset_Updates por cada idPending
@@ -27,6 +27,7 @@ type SyncItemResult = {
   result?: number | string;
   success?: boolean;
   message?: string;
+  folio?: number; 
 };
 // 0 en cualquier id = sin cambio (el backend conserva el valor actual)
 export type UpdatePayload = {
@@ -36,7 +37,7 @@ export type UpdatePayload = {
   idLocation: number;
   idStatus: number;
   idPersonnal: number;
-  summary: string; // texto legible para mostrar en la pantalla de sincronización
+  summary: string; 
 };
 
 // Opciones de Select_CI_Management_Catalogs (las mismas que en web)
@@ -217,6 +218,7 @@ export type SyncResult = {
   counts: Record<SyncOutcome, number>;
   details: SyncDetail[];
   aborted?: string;
+  folio: number; 
 };
 
 /* -------- Aviso de cambios en pendientes (para el contador de la pestaña Sync) -------- */
@@ -234,17 +236,17 @@ const notifyPendingChanges = () => {
   });
 };
 
-export const getPendingCount = () => sqlite_CountPendingUpdates();
+export const getPendingCount = (idPersonnal: number) => sqlite_CountPendingUpdates(idPersonnal);
 export const getBatchPendingCount = (idBatch: string) => sqlite_CountPendingByBatch(idBatch);
-export const getPendingList = (): Promise<PendingRow[]> => sqlite_SelectPendingUpdates();
+export const getPendingList = (idPersonnal: number): Promise<PendingRow[]> => sqlite_SelectPendingUpdates(idPersonnal);
 
 export const discardPending = async (idPending: number) => {
   await sqlite_DeletePendingUpdates([idPending]);
   notifyPendingChanges();
 };
 
-export const discardErrors = async () => {
-  await sqlite_DeleteErrorUpdates();
+export const discardErrors = async (idPersonnal: number) => {
+  await sqlite_DeleteErrorUpdates(idPersonnal);
   notifyPendingChanges();
 };
 
@@ -276,8 +278,16 @@ const DEFAULT_MESSAGE: Record<SyncOutcome, string> = {
  *   aparece en el detalle como "Other · Not sent".
  * Regresa el detalle de cada activo para mostrarlo en pantalla.
  */
-export async function syncPending(token: string, onProgress?: (p: SyncProgress) => void): Promise<SyncResult> {
-  const rows = await sqlite_SelectPendingUpdates();
+// Solo sube los cambios del usuario en sesión, con su propio token
+export async function syncPending(
+  token: string,
+  idPersonnal: number,
+  onProgress?: (p: SyncProgress) => void
+): Promise<SyncResult> {
+  const rows = await sqlite_SelectPendingUpdates(idPersonnal);
+
+  let folio = 0; 
+
   const total = rows.length;
   const details: SyncDetail[] = [];
   let aborted: string | undefined;
@@ -293,7 +303,7 @@ export async function syncPending(token: string, onProgress?: (p: SyncProgress) 
     // Como tus demás APIs, si falla la conexión regresa '' en lugar de un arreglo
     let results: SyncItemResult[] | '' = '';
     try {
-      results = await app_Sync_Asset_Updates(chunk, token);
+      results = await app_Sync_Asset_Updates(chunk, token, folio);
     } catch (e) {
       results = '';
     }
@@ -308,6 +318,8 @@ export async function syncPending(token: string, onProgress?: (p: SyncProgress) 
       }
       break;
     }
+
+    if (!folio && results.length > 0) folio = Number(results[0].folio) || 0;
 
     const byId = new Map(results.map((r) => [Number(r.idPending), r]));
     const okIds: number[] = [];
@@ -335,5 +347,5 @@ export async function syncPending(token: string, onProgress?: (p: SyncProgress) 
   const counts: Record<SyncOutcome, number> = { updated: 0, notfound: 0, error: 0, other: 0 };
   details.forEach((d) => counts[d.outcome]++);
 
-  return { total, counts, details, aborted };
+  return { total, counts, details, aborted, folio };
 }

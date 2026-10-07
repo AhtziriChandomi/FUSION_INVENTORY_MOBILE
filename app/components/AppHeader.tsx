@@ -3,6 +3,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { Appbar, Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserInfo } from '../../store/slices/userSlice';
+import { sqlite_ClearSession } from '../../services/sessionService';
 
 type Props = {
   title: string;
@@ -34,7 +35,8 @@ export default function AppHeader({ title, logoutMessage, disabled }: Props) {
         {
           text: 'Sign out',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await sqlite_ClearSession();
             dispatch(setUserInfo(null));
             router.replace('/');
           },

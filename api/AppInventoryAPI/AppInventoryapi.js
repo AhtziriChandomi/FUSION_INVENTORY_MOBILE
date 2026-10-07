@@ -12,10 +12,11 @@ import { DecryptObject } from '../../helpers/Encryption';
  * Si falla la conexión regresa '' (igual que tus otras APIs); la
  * sincronización lo detecta y NO borra los pendientes.
  */
-export async function app_Sync_Asset_Updates(params, ptoken) {
+export async function app_Sync_Asset_Updates(params, ptoken, folio) {
 
   let jsVar = {
     "option": 0,
+    "folio": parseInt(folio) || 0, 
     "assets": params.map(item => ({
       "idPending": parseInt(item.idPending) || 0,
       "assetNumber": item.assetNumber,

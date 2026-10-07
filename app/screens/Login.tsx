@@ -13,6 +13,7 @@ import { withOfflineFallback } from '../../services/offilineSwitch';
 import * as SQLiteToken from '../../services/Token';
 import * as SQLiteUser from '../../services/User';
 import { setUserInfo } from '../../store/slices/userSlice';
+import { sqlite_StartSession } from '../../services/sessionService';
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -82,6 +83,10 @@ export default function Login() {
         if (!result.ok) {
           setLoginError(result.message);
         } else {
+          await sqlite_StartSession(); 
+
+          console.log('[session] start', { offline: isOfflineMode });
+          
           dispatch(setUserInfo(result.user));
           router.replace('/main/Home');
         }
@@ -128,15 +133,6 @@ export default function Login() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.inner}>
-          {/* Marca: expo-image sí renderiza SVG (el Image de react-native no) */}
-          <View style={styles.hero}>
-            <Image
-              source={require('../../assets/images/ERP_Logo.svg')}
-              style={styles.logo}
-              contentFit="contain"
-            />
-          </View>
-
           {/* Formulario */}
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
 
@@ -145,7 +141,13 @@ export default function Login() {
               <View style={[styles.statusDot, { backgroundColor: isOfflineMode ? colors.error : '#16A34A' }]} />
               <Text style={styles.statusText}>{isOfflineMode ? 'Offline' : 'Online'}</Text>
             </View>
-
+            <View style={styles.hero}>
+              <Image
+                source={require('../../assets/images/ERP_Logo.svg')}
+                style={styles.logo}
+                contentFit="contain"
+              />
+            </View>
             <View>
               <TextInput
                 label="Employee number"
@@ -222,13 +224,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   inner: { width: '100%', maxWidth: 420, alignSelf: 'center' },
-  hero: { alignItems: 'center', marginBottom: 20 },
-  // Proporción del SVG (1081.9 x 312.7 ≈ 3.5 : 1)
-  logo: { width: 210, height: 60 },
+  hero: { alignItems: 'center', marginBottom: 30 },
+  logo: { width: 200, height: 60 },
   card: { borderRadius: 20, borderWidth: 1, padding: 16, gap: 4 },
   statusRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-    borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-end',
+    borderRadius: 12, paddingVertical: 4, paddingHorizontal: 10, marginBottom: 20,
   },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusText: { fontSize: 12, fontWeight: '700' },

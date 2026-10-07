@@ -14,6 +14,7 @@ import { Catalogs, Changes, ReviewRow, describe, emptyChanges, hasAnyChange } fr
 import { getCatalogs, saveUpdates, SaveResult } from '../../services/inventoryService';
 import { setUserInfo } from '../../store/slices/userSlice';
 import AppHeader from '../components/AppHeader';
+import { markActivity } from '../../services/sessionService';
 
 type Feedback = { type: 'ok' | 'warn' | 'error'; text: string } | null;
 
@@ -37,7 +38,7 @@ export default function Home() {
   const [result, setResult] = useState<SaveResult | null>(null);
  
   const scannedRef = useRef(new Set<string>()); // evita duplicados aunque se escanee muy rápido
- 
+
   useEffect(() => {
     if (!userInfo) router.replace('/');
   }, [userInfo]);
@@ -60,6 +61,8 @@ export default function Home() {
  
   // ---------------- Scan: solo agrega el asset number ----------------
   const handleScan = (code: string) => {
+    markActivity();
+    
     if (scannedRef.current.has(code)) {
       Vibration.vibrate(150);
       setFeedback({ type: 'warn', text: `${code} already in the list` });
@@ -112,7 +115,7 @@ export default function Home() {
         idCenter: r.changes.center.value,
         idLocation: r.changes.location.value,
         idStatus: r.changes.status.value,
-        idPersonnal: userInfo?.idPersonnal ?? 0,
+        idPersonnal: Number(userInfo?.idPersonnal) || 0,
         summary: describe(r.changes, ' · '),
       }));
  

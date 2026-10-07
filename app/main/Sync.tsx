@@ -25,7 +25,10 @@ const OUTCOME: Record<SyncOutcome, { label: string; icon: string; color: string;
 export default function Sync() {
   const { colors } = useTheme();
  
-  const { token } = useSelector((state: any) => state.user);
+  const { token, userInfo } = useSelector((state: any) => state.user);
+
+  const idPersonnal = Number(userInfo?.idPersonnal) || 0;
+
   const { forceOffline, isConnected } = useSelector((state: any) => state.app);
   const isOfflineMode = !isConnected || forceOffline;
  
@@ -37,11 +40,11 @@ export default function Sync() {
  
   const load = useCallback(async () => {
     try {
-      setRows(await getPendingList());
+      setRows(await getPendingList(idPersonnal));
     } catch (e) {
       console.log('Pending load error', e);
     }
-  }, []);
+  }, [idPersonnal]);
  
   useFocusEffect(useCallback(() => { load(); }, [load]));
  
@@ -64,7 +67,7 @@ export default function Sync() {
     setProgress({ done: 0, total: rows.length, updated: 0, failed: 0 });
     setSyncing(true);
     try {
-      const res = await syncPending(token, setProgress);
+      const res = await syncPending(token, idPersonnal, setProgress);
       setFilter('all');
       setResult(res);
     } catch (e: any) {
@@ -84,7 +87,7 @@ export default function Sync() {
   const confirmDiscardErrors = () =>
     Alert.alert('Discard errors', `Discard ${errorCount} failed change${errorCount !== 1 ? 's' : ''}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: async () => { await discardErrors(); load(); } },
+      { text: 'Discard', style: 'destructive', onPress: async () => { await discardErrors(idPersonnal); load(); } },
     ]);
  
   const filteredDetails = useMemo(
@@ -97,6 +100,16 @@ export default function Sync() {
     return (
       <View style={[styles.flex, { backgroundColor: colors.background }]}>
         <AppHeader title="Sync result" />
+
+        {result.folio > 0 && (
+          <View style={[styles.folioBox, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+            <Icon source="check-decagram-outline" size={22} color={colors.primary} />
+            <View style={styles.flex}>
+              <Text style={[styles.folioLabel, { color: colors.onSurfaceVariant }]}>Sync saved · Folio</Text>
+              <Text style={[styles.folioValue, { color: colors.onSurface }]}>#{result.folio}</Text>
+            </View>
+          </View>
+        )}
  
         {!!result.aborted && (
           <View style={[styles.banner, { backgroundColor: colors.errorContainer }]}>
@@ -320,4 +333,11 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: '700' },
   emptyText: { textAlign: 'center', padding: 24, fontSize: 12 },
   btnContent: { height: 46 },
+
+  folioBox: {
+  flexDirection: 'row', alignItems: 'center', gap: 10,
+  marginHorizontal: 12, marginTop: 10, padding: 12, borderRadius: 8, borderWidth: 1,
+  },
+  folioLabel: { fontSize: 11, fontWeight: '600' },
+  folioValue: { fontSize: 20, fontWeight: '800' },
 });

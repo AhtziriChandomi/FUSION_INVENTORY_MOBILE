@@ -68,11 +68,13 @@ export const sqlite_InsertPendingUpdates = async (rows: NewPendingRow[], idBatch
 /* ================================== SELECT ================================== */
 
 // En orden de captura: si un activo tiene 2 cambios, el más reciente se aplica al final
-export const sqlite_SelectPendingUpdates = async (): Promise<PendingRow[]> => {
+// Solo los pendientes del usuario en sesión
+export const sqlite_SelectPendingUpdates = async (idPersonnal: number): Promise<PendingRow[]> => {
   try {
     const dbInstance = await getDb();
     const result = await dbInstance.getAllAsync(
-      'SELECT * FROM PendingAssetUpdates ORDER BY idPending ASC'
+      'SELECT * FROM PendingAssetUpdates WHERE idPersonnal = ? ORDER BY idPending ASC',
+      [idPersonnal]
     );
     return result ?? [];
   } catch (error) {
@@ -81,19 +83,39 @@ export const sqlite_SelectPendingUpdates = async (): Promise<PendingRow[]> => {
   }
 };
 
-export const sqlite_CountPendingUpdates = async (): Promise<{ pending: number; errors: number }> => {
+export const sqlite_CountPendingUpdates = async (idPersonnal: number): Promise<{ pending: number; errors: number }> => {
   try {
     const dbInstance = await getDb();
     const row = await dbInstance.getFirstAsync(
       `SELECT
          IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS pending,
          IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS errors
-       FROM PendingAssetUpdates`,
-      [SYNC_STATUS.PENDING, SYNC_STATUS.ERROR]
+       FROM PendingAssetUpdates
+       WHERE idPersonnal = ?`,
+      [SYNC_STATUS.PENDING, SYNC_STATUS.ERROR, idPersonnal]
     );
     return { pending: row?.pending ?? 0, errors: row?.errors ?? 0 };
   } catch (error) {
     console.error('Error al contar pendientes:', error);
+    return { pending: 0, errors: 0 };
+  }
+};
+
+// Cuántos cambios de un lote siguen en el dispositivo (pendientes o con error)
+export const sqlite_CountPendingByBatch = async (idBatch: string): Promise<{ pending: number; errors: number }> => {
+  try {
+    const dbInstance = await getDb();
+    const row = await dbInstance.getFirstAsync(
+      `SELECT
+         IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS pending,
+         IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS errors
+       FROM PendingAssetUpdates
+       WHERE idBatch = ?`,
+      [SYNC_STATUS.PENDING, SYNC_STATUS.ERROR, idBatch]
+    );
+    return { pending: row?.pending ?? 0, errors: row?.errors ?? 0 };
+  } catch (error) {
+    console.error('Error al contar pendientes del lote:', error);
     return { pending: 0, errors: 0 };
   }
 };
@@ -132,32 +154,16 @@ export const sqlite_DeletePendingUpdates = async (ids: number[]) => {
   }
 };
 
-export const sqlite_DeleteErrorUpdates = async () => {
+export const sqlite_DeleteErrorUpdates = async (idPersonnal: number) => {
   try {
     await runDbWrite(async () => {
       const dbInstance = await getDb();
-      await dbInstance.runAsync('DELETE FROM PendingAssetUpdates WHERE syncStatus = ?', [SYNC_STATUS.ERROR]);
+      await dbInstance.runAsync(
+        'DELETE FROM PendingAssetUpdates WHERE syncStatus = ? AND idPersonnal = ?',
+        [SYNC_STATUS.ERROR, idPersonnal]
+      );
     });
   } catch (error) {
     console.error('Error al borrar pendientes con error:', error);
-  }
-};
-
-// Cuántos cambios de un lote siguen en el dispositivo (pendientes o con error)
-export const sqlite_CountPendingByBatch = async (idBatch: string): Promise<{ pending: number; errors: number }> => {
-  try {
-    const dbInstance = await getDb();
-    const row = await dbInstance.getFirstAsync(
-      `SELECT
-         IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS pending,
-         IFNULL(SUM(CASE WHEN syncStatus = ? THEN 1 ELSE 0 END), 0) AS errors
-       FROM PendingAssetUpdates
-       WHERE idBatch = ?`,
-      [SYNC_STATUS.PENDING, SYNC_STATUS.ERROR, idBatch]
-    );
-    return { pending: row?.pending ?? 0, errors: row?.errors ?? 0 };
-  } catch (error) {
-    console.error('Error al contar pendientes del lote:', error);
-    return { pending: 0, errors: 0 };
   }
 };
